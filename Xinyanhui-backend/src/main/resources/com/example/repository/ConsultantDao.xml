@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.repository.ConsultantDao">
+    <select id="getScheduledConsultants" resultType="com.example.pojo.Consultant">
+        SELECT consultant_id,name,professional_info FROM Consultants
+        WHERE consultant_id IN
+        (SELECT consultant_id FROM ConsultantDailyAvailability
+        UNION
+        SELECT consultant_id FROM CurrentAvailability)
+    </select>
+
+    <select id="getScheduledConsultantsByDate" resultType="com.example.pojo.Consultant">
+        SELECT consultant_id,name,professional_info FROM Consultants
+        WHERE consultant_id IN
+        (SELECT consultant_id FROM ConsultantDailyAvailability
+        WHERE available_date=#{date})
+    </select>
+
+    <select id="getAvailableConsultants" resultType="com.example.pojo.Consultant">
+        SELECT consultant_id,name,professional_info FROM Consultants
+        WHERE consultant_id IN
+        (SELECT consultant_id FROM CurrentAvailability)
+    </select>
+
+    <select id="getMorningAvailableRecords" resultType="com.example.pojo.MorningAvailableRecord">
+        SELECT cs.available_date,hour_8_available,hour_9_available,hour_10_available,hour_11_available,hour_12_available
+        FROM ConsultantSchedules cs JOIN ConsultantDailyAvailability cd
+        ON cs.consultant_id=cd.consultant_id
+        AND cs.available_date=cd.available_date
+        WHERE cs.consultant_id=#{id} AND start_time=8
+    </select>
+
+    <select id="getAfternoonAvailableRecords" resultType="com.example.pojo.AfternoonAvailableRecord">
+        SELECT cs.available_date,hour_13_available,hour_14_available,hour_15_available,hour_16_available,hour_17_available
+        FROM ConsultantSchedules cs JOIN ConsultantDailyAvailability cd
+        ON cs.consultant_id=cd.consultant_id
+        AND cs.available_date=cd.available_date
+        WHERE cs.consultant_id=#{id} AND start_time=13
+    </select>
+
+    <select id="getAllConsultants" resultType="com.example.pojo.Consultant">
+        SELECT consultant_id,name,professional_info
+        FROM Consultants
+        WHERE employed=true
+        <if test ="supervisorId!=null">
+            AND supervisor_id=#{supervisorId}
+        </if>
+    </select>
+
+    <select id="getConsultantWeeklyTime" resultType="map">
+        SELECT cs.consultant_id,c.name,
+        SUM(CASE WHEN cs.session_status='completed'
+        THEN TIMESTAMPDIFF(MINUTE, cs.start_time, cs.end_time)
+        ELSE 0 END)/60 AS total_time
+        FROM ConsultationSessions cs INNER JOIN Consultants c
+        ON cs.consultant_id=c.consultant_id
+        WHERE start_time
+        BETWEEN DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01') AND LAST_DAY(CURRENT_DATE())
+        GROUP BY c.consultant_id
+        ORDER BY total_time DESC
+    </select>
+</mapper>

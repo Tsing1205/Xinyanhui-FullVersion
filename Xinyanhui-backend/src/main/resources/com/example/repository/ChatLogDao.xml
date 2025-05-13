@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.repository.ChatLogDao">
+    <select id="getSessionChatLog" resultType="com.example.pojo.ChatMsg">
+        SELECT scl.content AS msg, scl.sender_type AS senderType, scl.time AS time
+        FROM SessionChatLog scl
+        WHERE session_id=#{sessionId}
+        ORDER BY time
+    </select>
+
+    <select id="getRecordChatLog" resultType="com.example.pojo.ChatMsg">
+        SELECT rcl.content AS msg, rcl.sender_type AS senderType, rcl.time AS time
+        FROM RecordChatLog rcl
+        WHERE record_id=#{sessionId}
+        ORDER BY time
+    </select>
+</mapper>

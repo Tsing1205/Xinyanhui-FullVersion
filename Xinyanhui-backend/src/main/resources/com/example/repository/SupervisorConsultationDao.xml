@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.repository.SupervisorConsultationDao">
+    <select id="getAbnormalSupervise" resultType="map">
+        SELECT sc.session_id,sc.supervisor_id, s.name AS supervisor_name,sc.consultant_id,c.name AS consultant_name,sc.request_time
+        FROM SupervisorConsultations sc
+        JOIN Supervisors s ON sc.supervisor_id = s.supervisor_id
+        JOIN Consultants c ON sc.consultant_id = c.consultant_id
+        WHERE sc.response_time IS NULL
+        AND sc.request_time &lt;= NOW() - INTERVAL 5 MINUTE
+    </select>
+
+    <select id="findWithNameBySupervisorId" resultType="map">
+        SELECT record_id AS recordId,session_id AS sessionId,
+        consultant_id AS consultantId, consultant_name AS consultantName,
+        supervisor_id AS supervisorId, supervisor_name AS supervisorName,
+        request_time AS requestTime, response_time AS responseTime
+        FROM SupervisorConsultationsWithNames
+        WHERE supervisor_id = #{supervisorId}
+        <if test="startTime!=null">
+            AND request_time >= #{startTime}
+        </if>
+        <if test="endTime!=null">
+            AND request_time &lt;= #{endTime}
+        </if>
+    </select>
+
+    <select id="findWithNameByConsultantId" resultType="map">
+        SELECT record_id AS recordId,session_id AS sessionId,
+        consultant_id AS consultantId, consultant_name AS consultantName,
+        supervisor_id AS supervisorId, supervisor_name AS supervisorName,
+        request_time AS requestTime, response_time AS responseTime
+        FROM SupervisorConsultationsWithNames
+        WHERE consultant_id = #{consultantId}
+        <if test="startTime!=null">
+            AND request_time >= #{startTime}
+        </if>
+        <if test="endTime!=null">
+            AND request_time &lt;= #{endTime}
+        </if>
+    </select>
+</mapper>

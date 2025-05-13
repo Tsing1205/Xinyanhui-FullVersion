@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.repository.ConsultationSessionDao">
+    <select id="getAbnormalConsultation" resultType="map">
+        SELECT cs.session_id,cs.user_id,u.username,cs.consultant_id,c.name,cs.start_time
+        FROM ConsultationSessions cs
+        JOIN Users u ON cs.user_id = u.user_id
+        JOIN Consultants c ON cs.consultant_id = c.consultant_id
+        WHERE cs.session_status = 'ready'
+        AND cs.start_time &lt;= NOW() - INTERVAL 5 MINUTE
+    </select>
+
+    <select id="getWeeklyConsultation" resultType="map">
+        SELECT
+        YEARWEEK(start_time, 1) AS week,
+        COUNT(*) AS total,
+        MIN(DATE(start_time - INTERVAL (WEEKDAY(start_time)) DAY)) AS week_start
+        FROM ConsultationSessions
+        WHERE YEARWEEK(start_time, 1) >= YEARWEEK(CURDATE(), 1) - (#{num}-1)
+        GROUP BY YEARWEEK(start_time, 1)
+        ORDER BY week_start;
+    </select>
+
+    <select id="getSessionWithNameByConsultantId" resultType="map">
+        SELECT session_id AS sessionId, user_id AS userId, user_username AS username,
+               consultant_id AS consultantId, consultant_name AS consultantName,
+                start_time AS startTime, end_time AS endTime,rating,feedback
+        FROM ConsultationSessionsWithNames
+        WHERE consultant_id = #{consultantId} AND session_status='completed'
+        <if test="startTime!=null">
+            AND start_time >= #{startTime}
+        </if>
+        <if test="endTime!=null">
+            AND start_time &lt;= #{endTime}
+        </if>
+    </select>
+
+    <select id="getSessionWithNameByUserId" resultType="map">
+        SELECT session_id AS sessionId, user_id AS userId, user_username AS username,
+        consultant_id AS consultantId, consultant_name AS consultantName,
+        start_time AS startTime, end_time AS endTime,rating,feedback
+        FROM ConsultationSessionsWithNames
+        WHERE user_id = #{userId} AND session_status='completed'
+        <if test="startTime!=null">
+            AND start_time >= #{startTime}
+        </if>
+        <if test="endTime!=null">
+            AND start_time &lt;= #{endTime}
+        </if>
+    </select>
+</mapper>
